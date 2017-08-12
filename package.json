@@ -9,7 +9,8 @@
     "Chad Engler <chad@pantherdev.com>",
     "Richard Davey <rdavey@gmail.com>"
   ],
-  "main": "./lib/index.js",
+  "main": "./dist/pixi.js",
+  "types": "./dist/pixi.js.d.ts",
   "homepage": "http://goodboydigital.com/",
   "bugs": "https://github.com/pixijs/pixi.js/issues",
   "license": "MIT",

@@ -59,7 +59,7 @@ function generateSampleSrc(maxTextures)
         }
 
         src += '\n{';
-        src += `\n\tcolor = texture2D(uSamplers[${i}], vTextureCoord);`;
+        src += `\n\tcolor = texture2D(uSamplers[${i}], vTextureCoord, -1.0);`;
         src += '\n}';
     }
 
