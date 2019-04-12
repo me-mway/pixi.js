@@ -1,4 +1,5 @@
 import Plane from './Plane';
+import CanvasTinter from '../core/sprites/canvas/CanvasTinter';
 
 const DEFAULT_BORDER_SIZE = 10;
 
@@ -74,7 +75,7 @@ export default class NineSlicePlane extends Plane
          * @memberof PIXI.NineSlicePlane#
          * @override
          */
-        this.leftWidth = typeof leftWidth !== 'undefined' ? leftWidth : DEFAULT_BORDER_SIZE;
+        this._leftWidth = typeof leftWidth !== 'undefined' ? leftWidth : DEFAULT_BORDER_SIZE;
 
         /**
          * The width of the right column (b)
@@ -83,7 +84,7 @@ export default class NineSlicePlane extends Plane
          * @memberof PIXI.NineSlicePlane#
          * @override
          */
-        this.rightWidth = typeof rightWidth !== 'undefined' ? rightWidth : DEFAULT_BORDER_SIZE;
+        this._rightWidth = typeof rightWidth !== 'undefined' ? rightWidth : DEFAULT_BORDER_SIZE;
 
         /**
          * The height of the top row (c)
@@ -92,7 +93,7 @@ export default class NineSlicePlane extends Plane
          * @memberof PIXI.NineSlicePlane#
          * @override
          */
-        this.topHeight = typeof topHeight !== 'undefined' ? topHeight : DEFAULT_BORDER_SIZE;
+        this._topHeight = typeof topHeight !== 'undefined' ? topHeight : DEFAULT_BORDER_SIZE;
 
         /**
          * The height of the bottom row (d)
@@ -101,7 +102,31 @@ export default class NineSlicePlane extends Plane
          * @memberof PIXI.NineSlicePlane#
          * @override
          */
-        this.bottomHeight = typeof bottomHeight !== 'undefined' ? bottomHeight : DEFAULT_BORDER_SIZE;
+        this._bottomHeight = typeof bottomHeight !== 'undefined' ? bottomHeight : DEFAULT_BORDER_SIZE;
+
+        /**
+         * Cached tint value so we can tell when the tint is changed.
+         *
+         * @member {number}
+         * @protected
+         */
+        this._cachedTint = 0xFFFFFF;
+
+        /**
+         * Cached tinted texture.
+         *
+         * @member {HTMLCanvasElement}
+         * @protected
+         */
+        this._tintedTexture = null;
+
+        /**
+         * Temporary storage for canvas source coords
+         *
+         * @member {number[]}
+         * @private
+         */
+        this._canvasUvs = null;
 
         this.refresh(true);
     }
@@ -114,8 +139,11 @@ export default class NineSlicePlane extends Plane
     {
         const vertices = this.vertices;
 
-        vertices[9] = vertices[11] = vertices[13] = vertices[15] = this._topHeight;
-        vertices[17] = vertices[19] = vertices[21] = vertices[23] = this._height - this._bottomHeight;
+        const h = this._topHeight + this._bottomHeight;
+        const scale = this._height > h ? 1.0 : this._height / h;
+
+        vertices[9] = vertices[11] = vertices[13] = vertices[15] = this._topHeight * scale;
+        vertices[17] = vertices[19] = vertices[21] = vertices[23] = this._height - (this._bottomHeight * scale);
         vertices[25] = vertices[27] = vertices[29] = vertices[31] = this._height;
     }
 
@@ -127,8 +155,11 @@ export default class NineSlicePlane extends Plane
     {
         const vertices = this.vertices;
 
-        vertices[2] = vertices[10] = vertices[18] = vertices[26] = this._leftWidth;
-        vertices[4] = vertices[12] = vertices[20] = vertices[28] = this._width - this._rightWidth;
+        const w = this._leftWidth + this._rightWidth;
+        const scale = this._width > w ? 1.0 : this._width / w;
+
+        vertices[2] = vertices[10] = vertices[18] = vertices[26] = this._leftWidth * scale;
+        vertices[4] = vertices[12] = vertices[20] = vertices[28] = this._width - (this._rightWidth * scale);
         vertices[6] = vertices[14] = vertices[22] = vertices[30] = this._width;
     }
 
@@ -141,12 +172,54 @@ export default class NineSlicePlane extends Plane
     _renderCanvas(renderer)
     {
         const context = renderer.context;
+        const transform = this.worldTransform;
+        const res = renderer.resolution;
+        const isTinted = this.tint !== 0xFFFFFF;
+        const texture = this._texture;
+
+        // Work out tinting
+        if (isTinted)
+        {
+            if (this._cachedTint !== this.tint)
+            {
+                // Tint has changed, need to update the tinted texture and use that instead
+
+                this._cachedTint = this.tint;
+
+                this._tintedTexture = CanvasTinter.getTintedTexture(this, this.tint);
+            }
+        }
+
+        const textureSource = !isTinted ? texture.baseTexture.source : this._tintedTexture;
+
+        if (!this._canvasUvs)
+        {
+            this._canvasUvs = [0, 0, 0, 0, 0, 0, 0, 0];
+        }
+
+        const vertices = this.vertices;
+        const uvs = this._canvasUvs;
+        const u0 = isTinted ? 0 : texture.frame.x;
+        const v0 = isTinted ? 0 : texture.frame.y;
+        const u1 = u0 + texture.frame.width;
+        const v1 = v0 + texture.frame.height;
+
+        uvs[0] = u0;
+        uvs[1] = u0 + this._leftWidth;
+        uvs[2] = u1 - this._rightWidth;
+        uvs[3] = u1;
+        uvs[4] = v0;
+        uvs[5] = v0 + this._topHeight;
+        uvs[6] = v1 - this._bottomHeight;
+        uvs[7] = v1;
+
+        for (let i = 0; i < 8; i++)
+        {
+            uvs[i] *= texture.baseTexture.resolution;
+        }
 
         context.globalAlpha = this.worldAlpha;
         renderer.setBlendMode(this.blendMode);
-
-        const transform = this.worldTransform;
-        const res = renderer.resolution;
 
         if (renderer.roundPixels)
         {
@@ -171,72 +244,20 @@ export default class NineSlicePlane extends Plane
             );
         }
 
-        const base = this._texture.baseTexture;
-        const textureSource = base.source;
-        const w = base.width * base.resolution;
-        const h = base.height * base.resolution;
-
-        this.drawSegment(context, textureSource, w, h, 0, 1, 10, 11);
-        this.drawSegment(context, textureSource, w, h, 2, 3, 12, 13);
-        this.drawSegment(context, textureSource, w, h, 4, 5, 14, 15);
-        this.drawSegment(context, textureSource, w, h, 8, 9, 18, 19);
-        this.drawSegment(context, textureSource, w, h, 10, 11, 20, 21);
-        this.drawSegment(context, textureSource, w, h, 12, 13, 22, 23);
-        this.drawSegment(context, textureSource, w, h, 16, 17, 26, 27);
-        this.drawSegment(context, textureSource, w, h, 18, 19, 28, 29);
-        this.drawSegment(context, textureSource, w, h, 20, 21, 30, 31);
-    }
-
-    /**
-     * Renders one segment of the plane.
-     * to mimic the exact drawing behavior of stretching the image like WebGL does, we need to make sure
-     * that the source area is at least 1 pixel in size, otherwise nothing gets drawn when a slice size of 0 is used.
-     *
-     * @private
-     * @param {CanvasRenderingContext2D} context - The context to draw with.
-     * @param {CanvasImageSource} textureSource - The source to draw.
-     * @param {number} w - width of the texture
-     * @param {number} h - height of the texture
-     * @param {number} x1 - x index 1
-     * @param {number} y1 - y index 1
-     * @param {number} x2 - x index 2
-     * @param {number} y2 - y index 2
-     */
-    drawSegment(context, textureSource, w, h, x1, y1, x2, y2)
-    {
-        // otherwise you get weird results when using slices of that are 0 wide or high.
-        const uvs = this.uvs;
-        const vertices = this.vertices;
-
-        let sw = (uvs[x2] - uvs[x1]) * w;
-        let sh = (uvs[y2] - uvs[y1]) * h;
-        let dw = vertices[x2] - vertices[x1];
-        let dh = vertices[y2] - vertices[y1];
-
-        // make sure the source is at least 1 pixel wide and high, otherwise nothing will be drawn.
-        if (sw < 1)
+        for (let row = 0; row < 3; row++)
         {
-            sw = 1;
-        }
+            for (let col = 0; col < 3; col++)
+            {
+                const ind = (col * 2) + (row * 8);
+                const sw = Math.max(1, uvs[col + 1] - uvs[col]);
+                const sh = Math.max(1, uvs[row + 5] - uvs[row + 4]);
+                const dw = Math.max(1, vertices[ind + 10] - vertices[ind]);
+                const dh = Math.max(1, vertices[ind + 11] - vertices[ind + 1]);
 
-        if (sh < 1)
-        {
-            sh = 1;
+                context.drawImage(textureSource, uvs[col], uvs[row + 4], sw, sh,
+                    vertices[ind], vertices[ind + 1], dw, dh);
+            }
         }
-
-        // make sure destination is at least 1 pixel wide and high, otherwise you get
-        // lines when rendering close to original size.
-        if (dw < 1)
-        {
-            dw = 1;
-        }
-
-        if (dh < 1)
-        {
-            dh = 1;
-        }
-
-        context.drawImage(textureSource, uvs[x1] * w, uvs[y1] * h, sw, sh, vertices[x1], vertices[y1], dw, dh);
     }
 
     /**

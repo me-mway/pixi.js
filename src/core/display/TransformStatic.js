@@ -32,7 +32,7 @@ export default class TransformStatic extends TransformBase
         this.scale = new ObservablePoint(this.onChange, this, 1, 1);
 
         /**
-         * The pivot point of the displayObject that it rotates around
+         * The pivot point of the displayObject that it rotates around.
          *
          * @member {PIXI.ObservablePoint}
          */
@@ -173,7 +173,10 @@ export default class TransformStatic extends TransformBase
 
     set rotation(value) // eslint-disable-line require-jsdoc
     {
-        this._rotation = value;
-        this.updateSkew();
+        if (this._rotation !== value)
+        {
+            this._rotation = value;
+            this.updateSkew();
+        }
     }
 }

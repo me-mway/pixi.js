@@ -43,12 +43,6 @@ export default class CanvasGraphicsRenderer
         const transform = graphics.transform.worldTransform;
         const resolution = renderer.resolution;
 
-         // if the tint has changed, set the graphics object to dirty.
-        if (this._prevTint !== this.tint)
-        {
-            this.dirty = true;
-        }
-
         context.setTransform(
             transform.a * resolution,
             transform.b * resolution,
@@ -58,10 +52,11 @@ export default class CanvasGraphicsRenderer
             transform.ty * resolution
         );
 
-        if (graphics.dirty)
+        // update tint if graphics was dirty
+        if (graphics.canvasTintDirty !== graphics.dirty
+            || graphics._prevTint !== graphics.tint)
         {
             this.updateGraphicsTint(graphics);
-            graphics.dirty = false;
         }
 
         renderer.setBlendMode(graphics.blendMode);
@@ -80,11 +75,64 @@ export default class CanvasGraphicsRenderer
             {
                 context.beginPath();
 
-                this.renderPolygon(shape.points, shape.closed, context);
+                let points = shape.points;
+                const holes = data.holes;
+                let outerArea;
+                let innerArea;
 
-                for (let j = 0; j < data.holes.length; j++)
+                context.moveTo(points[0], points[1]);
+
+                for (let j = 2; j < points.length; j += 2)
                 {
-                    this.renderPolygon(data.holes[j].points, true, context);
+                    context.lineTo(points[j], points[j + 1]);
+                }
+
+                // if the first and last point are the same close the path - much neater :)
+                if (shape.closed)
+                {
+                    context.closePath();
+                }
+
+                if (holes.length > 0)
+                {
+                    outerArea = 0;
+                    for (let j = 0; j < points.length; j += 2)
+                    {
+                        outerArea += (points[j] * points[j + 3]) - (points[j + 1] * points[j + 2]);
+                    }
+
+                    for (let k = 0; k < holes.length; k++)
+                    {
+                        points = holes[k].points;
+
+                        innerArea = 0;
+                        for (let j = 0; j < points.length; j += 2)
+                        {
+                            innerArea += (points[j] * points[j + 3]) - (points[j + 1] * points[j + 2]);
+                        }
+
+                        context.moveTo(points[0], points[1]);
+
+                        if (innerArea * outerArea < 0)
+                        {
+                            for (let j = 2; j < points.length; j += 2)
+                            {
+                                context.lineTo(points[j], points[j + 1]);
+                            }
+                        }
+                        else
+                        {
+                            for (let j = points.length - 2; j >= 2; j -= 2)
+                            {
+                                context.lineTo(points[j], points[j + 1]);
+                            }
+                        }
+
+                        if (holes[k].closed)
+                        {
+                            context.closePath();
+                        }
+                    }
                 }
 
                 if (data.fill)
@@ -226,6 +274,7 @@ export default class CanvasGraphicsRenderer
     updateGraphicsTint(graphics)
     {
         graphics._prevTint = graphics.tint;
+        graphics.canvasTintDirty = graphics.dirty;
 
         const tintR = ((graphics.tint >> 16) & 0xFF) / 255;
         const tintG = ((graphics.tint >> 8) & 0xFF) / 255;
@@ -238,7 +287,7 @@ export default class CanvasGraphicsRenderer
             const fillColor = data.fillColor | 0;
             const lineColor = data.lineColor | 0;
 
-            // super inline cos im an optimization NAZI :)
+            // super inline, cos optimization :)
             data._fillTint = (
                 (((fillColor >> 16) & 0xFF) / 255 * tintR * 255 << 16)
                 + (((fillColor >> 8) & 0xFF) / 255 * tintG * 255 << 8)

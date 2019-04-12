@@ -163,4 +163,57 @@ describe('PIXI.Matrix', function ()
         expect(matrix.tx).to.equal(0);
         expect(matrix.ty).to.equal(0);
     });
+
+    it('should have the same transform after decompose', function ()
+    {
+        const matrix = new PIXI.Matrix();
+        const transformInitial  = new PIXI.Transform();
+        const transformDecomposed = new PIXI.Transform();
+
+        for (var x = 0; x < 50; ++x)
+        {
+            transformInitial.position.x = (Math.random() * 1000) - 2000;
+            transformInitial.position.y = (Math.random() * 1000) - 2000;
+            transformInitial.scale.x = (Math.random() * 5) - 10;
+            transformInitial.scale.y = (Math.random() * 5) - 10;
+            transformInitial.rotation = (Math.random() - 2) * Math.PI;
+            transformInitial.skew.x = (Math.random() - 2) * Math.PI;
+            transformInitial.skew.y = (Math.random() - 2) * Math.PI;
+
+            matrix.setTransform(
+                transformInitial.x, transformInitial.y,
+                0, 0,
+                transformInitial.scale.x, transformInitial.scale.y,
+                transformInitial.rotation,
+                transformInitial.skew.x, transformInitial.skew.y
+            );
+            matrix.decompose(transformDecomposed);
+
+            expect(transformInitial.a).to.equal(transformDecomposed.a);
+            expect(transformInitial.b).to.equal(transformDecomposed.b);
+            expect(transformInitial.c).to.equal(transformDecomposed.c);
+            expect(transformInitial.d).to.equal(transformDecomposed.d);
+            expect(transformInitial.tx).to.equal(transformDecomposed.tx);
+            expect(transformInitial.ty).to.equal(transformDecomposed.ty);
+        }
+    });
+
+    it('should decompose corner case', function ()
+    {
+        const matrix = new PIXI.Matrix();
+        const transform  = new PIXI.Transform();
+        const result = transform.localTransform;
+
+        matrix.a = -0.00001;
+        matrix.b = -1;
+        matrix.c = 1;
+        matrix.d = 0;
+        matrix.decompose(transform);
+        transform.updateLocalTransform();
+
+        expect(result.a).to.closeTo(matrix.a, 0.001);
+        expect(result.b).to.closeTo(matrix.b, 0.001);
+        expect(result.c).to.closeTo(matrix.c, 0.001);
+        expect(result.d).to.closeTo(matrix.d, 0.001);
+    });
 });

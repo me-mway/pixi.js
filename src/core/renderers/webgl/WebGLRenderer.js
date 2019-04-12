@@ -53,7 +53,7 @@ export default class WebGLRenderer extends SystemRenderer
      * @param {number} [options.backgroundColor=0x000000] - The background color of the rendered area
      *  (shown if not transparent).
      * @param {boolean} [options.legacy=false] - If true PixiJS will aim to ensure compatibility
-     *  with older / less advanced devices. If you experiance unexplained flickering try setting this to true.
+     *  with older / less advanced devices. If you experience unexplained flickering try setting this to true.
      * @param {string} [options.powerPreference] - Parameter passed to webgl context, set to "high-performance"
      *  for devices with dual graphics card
      */
@@ -241,6 +241,13 @@ export default class WebGLRenderer extends SystemRenderer
         this.boundTextures = new Array(maxTextures);
         this.emptyTextures = new Array(maxTextures);
 
+        /**
+         * Did someone temper with textures state? We'll overwrite them when we need to unbind something.
+         * @member {boolean}
+         * @private
+         */
+        this._unknownBoundTextures = false;
+
         // create a texture manager...
         this.textureManager = new TextureManager(this);
         this.filterManager = new FilterManager(this);
@@ -283,7 +290,7 @@ export default class WebGLRenderer extends SystemRenderer
      * @param {PIXI.DisplayObject} displayObject - the object to be rendered
      * @param {PIXI.RenderTexture} renderTexture - The render texture to render to.
      * @param {boolean} [clear] - Should the canvas be cleared before the new render
-     * @param {PIXI.Transform} [transform] - A transform to apply to the render texture before rendering.
+     * @param {PIXI.Matrix} [transform] - A transform to apply to the render texture before rendering.
      * @param {boolean} [skipUpdateTransform] - Should we skip the update transform pass?
      */
     render(displayObject, renderTexture, clear, transform, skipUpdateTransform)
@@ -444,7 +451,7 @@ export default class WebGLRenderer extends SystemRenderer
      * Binds a render texture for rendering
      *
      * @param {PIXI.RenderTexture} renderTexture - The render texture to render
-     * @param {PIXI.Transform} transform - The transform to be applied to the render texture
+     * @param {PIXI.Matrix} transform - The transform to be applied to the render texture
      * @return {PIXI.WebGLRenderer} Returns itself.
      */
     bindRenderTexture(renderTexture, transform)
@@ -600,6 +607,22 @@ export default class WebGLRenderer extends SystemRenderer
 
         texture = texture.baseTexture || texture;
 
+        if (this._unknownBoundTextures)
+        {
+            this._unknownBoundTextures = false;
+            // someone changed webGL state,
+            // we have to be sure that our texture does not appear in multitexture renderer samplers
+
+            for (let i = 0; i < this.boundTextures.length; i++)
+            {
+                if (this.boundTextures[i] === this.emptyTextures[i])
+                {
+                    gl.activeTexture(gl.TEXTURE0 + i);
+                    gl.bindTexture(gl.TEXTURE_2D, this.emptyTextures[i]._glTextures[this.CONTEXT_UID].texture);
+                }
+            }
+        }
+
         for (let i = 0; i < this.boundTextures.length; i++)
         {
             if (this.boundTextures[i] === texture)
@@ -664,6 +687,8 @@ export default class WebGLRenderer extends SystemRenderer
         this.bindVao(null);
         this._activeShader = null;
         this._activeRenderTarget = this.rootRenderTarget;
+
+        this._unknownBoundTextures = true;
 
         for (let i = 0; i < this.boundTextures.length; i++)
         {

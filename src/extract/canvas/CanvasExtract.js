@@ -93,7 +93,7 @@ export default class CanvasExtract
         else
         {
             context = renderer.rootContext;
-
+            resolution = renderer.resolution;
             frame = TEMP_RECT;
             frame.width = this.renderer.width;
             frame.height = this.renderer.height;
@@ -102,7 +102,7 @@ export default class CanvasExtract
         const width = frame.width * resolution;
         const height = frame.height * resolution;
 
-        const canvasBuffer = new core.CanvasRenderTarget(width, height);
+        const canvasBuffer = new core.CanvasRenderTarget(width, height, 1);
         const canvasData = context.getImageData(frame.x * resolution, frame.y * resolution, width, height);
 
         canvasBuffer.context.putImageData(canvasData, 0, 0);

@@ -2,7 +2,7 @@ import BaseTexture from './BaseTexture';
 import VideoBaseTexture from './VideoBaseTexture';
 import TextureUvs from './TextureUvs';
 import EventEmitter from 'eventemitter3';
-import { Rectangle } from '../math';
+import { Rectangle, Point } from '../math';
 import { TextureCache, getResolutionOfUrl } from '../utils';
 import settings from '../settings';
 
@@ -40,8 +40,9 @@ export default class Texture extends EventEmitter
      * @param {PIXI.Rectangle} [orig] - The area of original texture
      * @param {PIXI.Rectangle} [trim] - Trimmed rectangle of original texture
      * @param {number} [rotate] - indicates how the texture was rotated by texture packer. See {@link PIXI.GroupD8}
+     * @param {PIXI.Point} [anchor] - Default anchor point used for sprite placement / rotation
      */
-    constructor(baseTexture, frame, orig, trim, rotate)
+    constructor(baseTexture, frame, orig, trim, rotate, anchor)
     {
         super();
 
@@ -144,6 +145,14 @@ export default class Texture extends EventEmitter
         }
 
         /**
+         * Anchor point that is used as default if sprite is created with this texture.
+         * Changing the `defaultAnchor` at a later point of time will not update Sprite's anchor point.
+         * @member {PIXI.Point}
+         * @default {0,0}
+         */
+        this.defaultAnchor = anchor ? new Point(anchor.x, anchor.y) : new Point(0, 0);
+
+        /**
          * Fired when the texture is updated. This happens if the frame or the baseTexture is updated.
          *
          * @event PIXI.Texture#update
@@ -156,7 +165,7 @@ export default class Texture extends EventEmitter
         /**
          * Contains data for uvs. May contain clamp settings and some matrices.
          * Its a bit heavy, so by default that object is not created.
-         * @type {PIXI.TextureMatrix}
+         * @member {PIXI.TextureMatrix}
          * @default null
          */
         this.transform = null;
@@ -265,7 +274,7 @@ export default class Texture extends EventEmitter
      */
     clone()
     {
-        return new Texture(this.baseTexture, this.frame, this.orig, this.trim, this.rotate);
+        return new Texture(this.baseTexture, this.frame, this.orig, this.trim, this.rotate, this.defaultAnchor);
     }
 
     /**
@@ -347,16 +356,18 @@ export default class Texture extends EventEmitter
      * @static
      * @param {HTMLVideoElement|string} video - The URL or actual element of the video
      * @param {number} [scaleMode=PIXI.settings.SCALE_MODE] - See {@link PIXI.SCALE_MODES} for possible values
+     * @param {boolean} [crossorigin=(auto)] - Should use anonymous CORS? Defaults to true if the URL is not a data-URI.
+     * @param {boolean} [autoPlay=true] - Start playing video as soon as it is loaded
      * @return {PIXI.Texture} The newly created texture
      */
-    static fromVideo(video, scaleMode)
+    static fromVideo(video, scaleMode, crossorigin, autoPlay)
     {
         if (typeof video === 'string')
         {
-            return Texture.fromVideoUrl(video, scaleMode);
+            return Texture.fromVideoUrl(video, scaleMode, crossorigin, autoPlay);
         }
 
-        return new Texture(VideoBaseTexture.fromVideo(video, scaleMode));
+        return new Texture(VideoBaseTexture.fromVideo(video, scaleMode, autoPlay));
     }
 
     /**
@@ -365,11 +376,13 @@ export default class Texture extends EventEmitter
      * @static
      * @param {string} videoUrl - URL of the video
      * @param {number} [scaleMode=PIXI.settings.SCALE_MODE] - See {@link PIXI.SCALE_MODES} for possible values
+     * @param {boolean} [crossorigin=(auto)] - Should use anonymous CORS? Defaults to true if the URL is not a data-URI.
+     * @param {boolean} [autoPlay=true] - Start playing video as soon as it is loaded
      * @return {PIXI.Texture} The newly created texture
      */
-    static fromVideoUrl(videoUrl, scaleMode)
+    static fromVideoUrl(videoUrl, scaleMode, crossorigin, autoPlay)
     {
-        return new Texture(VideoBaseTexture.fromUrl(videoUrl, scaleMode));
+        return new Texture(VideoBaseTexture.fromUrl(videoUrl, scaleMode, crossorigin, autoPlay));
     }
 
     /**

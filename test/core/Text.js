@@ -109,11 +109,32 @@ describe('PIXI.Text', function ()
             expect(text.text).to.equal(' ');
         });
 
+        it('should trim an empty string', function ()
+        {
+            const text = new PIXI.Text('', { trim: true });
+
+            expect(text.text).to.equal(' ');
+        });
+
         it('should prevent setting \'\'', function ()
         {
             const text = new PIXI.Text('');
 
             expect(text.text).to.equal(' ');
+        });
+
+        it('should keep at least 1 pixel for canvas width and height', function ()
+        {
+            const text = new PIXI.Text('');
+
+            text.updateText();
+
+            expect(text.canvas.width).to.be.above(1);
+            expect(text.canvas.height).to.be.above(1);
+
+            text.text = '\n';
+
+            expect(text.canvas.width).to.be.above(1);
         });
     });
 });
