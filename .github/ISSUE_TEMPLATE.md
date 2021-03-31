@@ -1,9 +1,19 @@
-<!-- See CONTRIBUTING.md for guidelines on reporting issues. Delete any lines as needed.-->
+<!--
+Thank you for reporting an issue!
 
-Your issue may already be reported! Please search [existing issues](../) before creating one.
+Before opening an issue _please_ check if a similar issue exists by
+searching existing issues (https://github.com/pixijs/pixi.js/issues).
+
+If possible, please provide code that demonstrates the problem.
+Links to a running example of the problem are best!
+
+Before submitting please read:
+
+Contributors guide: https://github.com/pixijs/pixi.js/blob/dev/.github/CONTRIBUTING.md
+Code of Conduct: https://github.com/pixijs/pixi.js/blob/dev/.github/CODE_OF_CONDUCT.md
+-->
 
 <!-- Bug Report (delete if not applicable) -->
-
 ### Expected Behavior
 
 ### Current Behavior
@@ -14,6 +24,7 @@ Your issue may already be reported! Please search [existing issues](../) before 
 
 ### Environment
 
-- `pixi.js` version: _e.g. 4.7.1_
-- Browser: _e.g. Chrome 67_
-- Device: _e.g. Desktop_
+- **`pixi.js` version**: _e.g. 4.7.1_
+- **Browser & Version**: _e.g. Chrome 67_
+- **OS & Version**: _e.g. Ubuntu 18.04_
+- **Running Example**: _url_

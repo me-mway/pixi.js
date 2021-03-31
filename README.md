@@ -1,21 +1,28 @@
 PixiJS — The HTML5 Creation Engine
 =============
 
-![pixi.js logo](http://pixijs.download/pixijs-banner.png)
+![pixi.js logo](https://pixijs.download/pixijs-banner-no-version.png)
 
-[![Inline docs](http://inch-ci.org/github/pixijs/pixi.js.svg?branch=dev)](http://inch-ci.org/github/pixijs/pixi.js)
-[![Build Status](https://travis-ci.org/pixijs/pixi.js.svg?branch=dev)](https://travis-ci.org/pixijs/pixi.js)
+[<img src="https://img.shields.io/badge/slack/pixijs-gray.svg?logo=slack">](https://join.slack.com/t/pixijs/shared_invite/zt-dcem1map-uVuVGC7pZ0trF8SrcA2p9g)
+[![npm version](https://badge.fury.io/js/pixi.js.svg)](https://badge.fury.io/js/pixi.js)
+[![Node.js CI](https://github.com/pixijs/pixi.js/workflows/Node.js%20CI/badge.svg)](https://github.com/pixi.js/pixi.js/actions?query=workflow%3A%22Node.js+CI%22)
 
 The aim of this project is to provide a fast lightweight 2D library that works
 across all devices. The PixiJS renderer allows everyone to enjoy the power of
 hardware acceleration without prior knowledge of WebGL. Also, it's fast. Really fast.
 
-If you want to keep up to date with the latest PixiJS news then feel free to follow us on Twitter
+If you want to keep up to date with the latest PixiJS news then feel free to follow us on twitter
 ([@doormat23](https://twitter.com/doormat23), [@rolnaaba](https://twitter.com/rolnaaba), [@bigtimebuddy](https://twitter.com/bigtimebuddy), [@ivanpopelyshev](https://twitter.com/ivanpopelyshev))
 and we will keep you posted! You can also check back on [our site](http://www.pixijs.com)
 as any breakthroughs will be posted up there too!
 
-**Your support helps us make PixiJS even better. Make your pledge on [Patreon](https://www.patreon.com/user?u=2384552&ty=h&u=2384552) and we'll love you forever!**
+**We are now a part of the [Open Collective](https://opencollective.com/pixijs) and with your support you can help us make PixiJS even better. To make a donation, simply click the button below and we'll love you forever!**
+
+<div align="center">
+  <a href="https://opencollective.com/pixijs/donate" target="_blank">
+    <img src="https://opencollective.com/pixijs/donate/button@2x.png?color=blue" width=250 />
+  </a>
+</div>
 
 ### What to Use PixiJS for and When to Use It
 
@@ -33,7 +40,7 @@ PixiJS has full [WebGL](https://en.wikipedia.org/wiki/WebGL) support and seamles
 - Wiki: Other misc tutorials and resources are [on the Wiki](https://github.com/pixijs/pixi.js/wiki).
 
 ### Community ###
-- Forums: Check out the [forum](http://www.html5gamedevs.com/forum/15-pixijs/) and [Stackoverflow](http://stackoverflow.com/search?q=pixi.js), both friendly places to ask your pixi questions.
+- Forums: Check out the [forum](http://www.html5gamedevs.com/forum/15-pixijs/) and [Stackoverflow](http://stackoverflow.com/search?q=pixi.js), both friendly places to ask your PixiJS questions.
 - Inspiration: Check out the [gallery](http://www.pixijs.com/gallery) to see some of the amazing things people have created!
 - Chat: You can join us on [Gitter](https://gitter.im/pixijs/pixi.js) To chat about PixiJS. We also now have a Slack channel. If you would like to join it please Send me an email (mat@goodboydigital.com) and I will invite you in.
 
@@ -60,10 +67,10 @@ import * as PIXI from 'pixi.js'
 #### CDN Install (via cdnjs)
 
 ```html
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.7.1/pixi.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.1.3/pixi.min.js"></script>
 ```
 
-_Note: `4.7.1` can be replaced by any [released](https://github.com/pixijs/pixi.js/releases) version._
+_Note: `5.1.3` can be replaced by any [released](https://github.com/pixijs/pixi.js/releases) version._
 
 ### Demos ###
 
@@ -108,11 +115,13 @@ before submitting changes.
 - Primitive Drawing
 - Masking
 - Filters
-- [User Plugins](https://github.com/pixijs/pixi.js/wiki/v3-Pixi-Plugins)
+- [User Plugins](https://github.com/pixijs/pixi.js/wiki/v5-Resources)
 
 ### Basic Usage Example ###
 
 ```js
+import * as PIXI from 'pixi.js';
+
 // The application will create a renderer using WebGL, if possible,
 // with a fallback to a canvas render. It will also setup the ticker
 // and the root stage PIXI.Container
@@ -123,7 +132,7 @@ const app = new PIXI.Application();
 document.body.appendChild(app.view);
 
 // load the texture we need
-PIXI.loader.add('bunny', 'bunny.png').load((loader, resources) => {
+app.loader.add('bunny', 'bunny.png').load((loader, resources) => {
     // This creates a texture from a 'bunny.png' image
     const bunny = new PIXI.Sprite(resources.bunny.texture);
 
@@ -162,22 +171,7 @@ npm install
 Then, to build the source, run:
 
 ```sh
-npm run dist
-```
-
-This will create a minified version at `dist/pixi.min.js` and a non-minified version at `dist/pixi.js`
-with all the plugins in the PixiJS project.
-
-If there are specific plugins you don't want, say "interaction" or "extras", you can exclude those:
-
-```sh
-npm run dist -- --exclude extras --exclude interaction
-```
-
-You can also use the short-form `-e`:
-
-```sh
-npm run dist -- -e extras -e interaction -e filters
+npm run build
 ```
 
 ### How to generate the documentation ###
@@ -188,7 +182,7 @@ The docs can be generated using npm:
 npm run docs
 ```
 
-The documentation uses [Jaguar.js](https://github.com/pixijs/jaguarjs-jsdoc) and the jsdoc format, the configuration file can be found at [scripts/jsdoc.conf.json](scripts/jsdoc.conf.json)
+The documentation uses [webdoc](https://github.com/webdoc-labs/webdoc) in combination with this template [pixi-webdoc-template](https://github.com/pixijs/pixi-webdoc-template). The configuration file can be found at [webdoc.conf.json](webdoc.conf.json)
 
 ### License ###
 
